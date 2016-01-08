@@ -44,12 +44,18 @@ config = {
             // Host to be passed to node's `net.Server#listen()`
             host: '127.0.0.1',
             // Port to be passed to node's `net.Server#listen()`, for iisnode set this to `process.env.PORT`
-            port: process.env.PORT
+            port: process.env.PORT || 2368
         },
         paths: {
             contentPath: path.join(__dirname, '/content/')
         },
-        forceAdminSSL: false
+        forceAdminSSL: false,
+	storage: {
+	    active: 'ghost-azurestorage',
+	    'ghost-azurestorage': {
+		container: 'blog',
+	    }
+	}
     },
 
     // ### Production
@@ -82,7 +88,13 @@ config = {
             // Port to be passed to node's `net.Server#listen()`, for iisnode set this to `process.env.PORT`
             port: process.env.PORT
         },
-        forceAdminSSL: true
+        forceAdminSSL: true,
+	storage: {
+	    active: 'ghost-azurestorage',
+	    'ghost-azurestorage': {
+		container: 'blog',
+	    }
+	}	
     },
 
     // **Developers only need to edit below here**
