@@ -14,7 +14,7 @@ var hbs             = require('express-hbs'),
 
 content = function (options) {
     var truncateOptions = (options || {}).hash || {};
-    truncateOptions = _.pick(truncateOptions, ['words', 'characters']);
+    truncateOptions = _.pick(truncateOptions, ['words', 'characters', 'preview']);
     _.keys(truncateOptions).map(function (key) {
         truncateOptions[key] = parseInt(truncateOptions[key], 10);
     });
@@ -30,6 +30,13 @@ content = function (options) {
         return new hbs.handlebars.SafeString(
             downsize(this.html, truncateOptions)
         );
+    }
+
+    else if ((truncateOptions.hasOwnProperty('preview')) && (this.html.indexOf('<!--preview-->')) > 0) {
+	    var split = this.html.split('<!--preview-->', 2);
+	    var excerpt = split[0];
+	    excerpt += '&hellip;\n';
+	    return new hbs.handlebars.SafeString(excerpt);
     }
 
     return new hbs.handlebars.SafeString(this.html);
