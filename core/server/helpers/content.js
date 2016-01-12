@@ -35,7 +35,6 @@ content = function (options) {
     else if ((truncateOptions.hasOwnProperty('preview')) && (this.html.indexOf('<!--preview-->')) > 0) {
 	    var split = this.html.split('<!--preview-->', 2);
 	    var excerpt = split[0];
-	    excerpt += '&hellip;\n';
 	    return new hbs.handlebars.SafeString(excerpt);
     }
 
