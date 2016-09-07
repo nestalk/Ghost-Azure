@@ -1,12 +1,12 @@
 var _       = require('lodash'),
-    utils   = require('../../utils'),
+    utils   = require('../../../utils'),
     sitemap = require('./index');
 
 // Responsible for handling requests for sitemap files
 module.exports = function handler(blogApp) {
     var resourceTypes = ['posts', 'authors', 'tags', 'pages'],
         verifyResourceType = function verifyResourceType(req, res, next) {
-            if (!_.contains(resourceTypes, req.params.resource)) {
+            if (!_.includes(resourceTypes, req.params.resource)) {
                 return res.sendStatus(404);
             }
 

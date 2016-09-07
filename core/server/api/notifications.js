@@ -4,9 +4,11 @@ var Promise            = require('bluebird'),
     _                  = require('lodash'),
     permissions        = require('../permissions'),
     errors             = require('../errors'),
+    settings           = require('./settings'),
     utils              = require('./utils'),
     pipeline           = require('../utils/pipeline'),
     canThis            = permissions.canThis,
+    i18n               = require('../i18n'),
 
     // Holds the persistent notifications
     notificationsStore = [],
@@ -30,7 +32,7 @@ notifications = {
         return canThis(options.context).browse.notification().then(function () {
             return {notifications: notificationsStore};
         }, function () {
-            return Promise.reject(new errors.NoPermissionError('You do not have permission to browse notifications.'));
+            return Promise.reject(new errors.NoPermissionError(i18n.t('errors.api.notifications.noPermissionToBrowseNotif')));
         });
     },
 
@@ -45,6 +47,7 @@ notifications = {
          *      message: 'This is an error', // A string. Should fit in one line.
          *      location: 'bottom', // A string where this notification should appear. can be 'bottom' or 'top'
          *      dismissible: true // A Boolean. Whether the notification is dismissible or not.
+         *      custom: true // A Boolean. Whether the notification is a custom message intended for particular Ghost versions.
          *  }] };
      * ```
      */
@@ -65,7 +68,7 @@ notifications = {
             return canThis(options.context).add.notification().then(function () {
                 return options;
             }, function () {
-                return Promise.reject(new errors.NoPermissionError('You do not have permission to add notifications.'));
+                return Promise.reject(new errors.NoPermissionError(i18n.t('errors.api.notifications.noPermissionToAddNotif')));
             });
         }
 
@@ -114,10 +117,24 @@ notifications = {
      * Remove a specific notification
      *
      * @param {{id (required), context}} options
-     * @returns {Promise(Notifications)}
+     * @returns {Promise}
      */
     destroy: function destroy(options) {
         var tasks;
+
+        /**
+         * Adds the uuid of notification to "seenNotifications" array.
+         * @param {Object} notification
+         * @return {*|Promise}
+         */
+        function markAsSeen(notification) {
+            var context = {internal: true};
+            return settings.read({key: 'seenNotifications', context: context}).then(function then(response) {
+                var seenNotifications = JSON.parse(response.settings[0].value);
+                seenNotifications = _.uniqBy(seenNotifications.concat([notification.uuid]));
+                return settings.edit({settings: [{key: 'seenNotifications', value: seenNotifications}]}, {context: context});
+            });
+        }
 
         /**
          * ### Handle Permissions
@@ -129,7 +146,7 @@ notifications = {
             return canThis(options.context).destroy.notification().then(function () {
                 return options;
             }, function () {
-                return Promise.reject(new errors.NoPermissionError('You do not have permission to destroy notifications.'));
+                return Promise.reject(new errors.NoPermissionError(i18n.t('errors.api.notifications.noPermissionToDestroyNotif')));
             });
         }
 
@@ -140,12 +157,12 @@ notifications = {
 
             if (notification && !notification.dismissible) {
                 return Promise.reject(
-                    new errors.NoPermissionError('You do not have permission to dismiss this notification.')
+                    new errors.NoPermissionError(i18n.t('errors.api.notifications.noPermissionToDismissNotif'))
                 );
             }
 
             if (!notification) {
-                return Promise.reject(new errors.NotFoundError('Notification does not exist.'));
+                return Promise.reject(new errors.NotFoundError(i18n.t('errors.api.notifications.notificationDoesNotExist')));
             }
 
             notificationsStore = _.reject(notificationsStore, function (element) {
@@ -153,7 +170,9 @@ notifications = {
             });
             notificationCounter = notificationCounter - 1;
 
-            return notification;
+            if (notification.custom) {
+                return markAsSeen(notification);
+            }
         }
 
         tasks = [
@@ -162,9 +181,7 @@ notifications = {
             destroyNotification
         ];
 
-        return pipeline(tasks, options).then(function formatResponse(result) {
-            return {notifications: [result]};
-        });
+        return pipeline(tasks, options);
     },
 
     /**
@@ -181,7 +198,7 @@ notifications = {
 
             return notificationsStore;
         }, function () {
-            return Promise.reject(new errors.NoPermissionError('You do not have permission to destroy notifications.'));
+            return Promise.reject(new errors.NoPermissionError(i18n.t('errors.api.notifications.noPermissionToDestroyNotif')));
         });
     }
 };
