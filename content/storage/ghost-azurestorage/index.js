@@ -6,7 +6,7 @@ var azure = require('azure-storage'),
     nodefn = require('when/node'),
     url = require('url'),
     util = require('util'),
-    BaseStore = require('../../../core/server/storage/base');
+    BaseStore = require('../../../core/server/storage/base'),
     options = {};
 
 
