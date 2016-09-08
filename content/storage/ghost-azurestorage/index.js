@@ -11,6 +11,7 @@ var azure = require('azure-storage'),
 
 
 function azurestore(config) {
+    BaseStore.call(this);
     options = config || {};
     options.connectionString = options.connectionString || process.env.AZURE_STORAGE_CONNECTION_STRING;
     options.container = options.container || 'ghost';
